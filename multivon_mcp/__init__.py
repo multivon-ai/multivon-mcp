@@ -18,11 +18,13 @@ Quickstart::
 After registering, ask Claude:
     "use multivon to evaluate this RAG output for faithfulness"
 
-The agent discovers the 8 available tools via the MCP capabilities
-handshake and calls them directly.
+The agent discovers the 19 available tools via the MCP capabilities
+handshake and calls them directly. Categories: discovery, PDF Hell
+benchmark, faithfulness, RAG retrieval, agent trajectory, compliance,
+safety, multimodal, custom rubrics, audit packs.
 """
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.1"
 
 __all__ = ["__version__"]
