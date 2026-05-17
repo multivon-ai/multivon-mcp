@@ -10,6 +10,9 @@ from .safety_tools import register as register_safety
 from .rag_tools import register as register_rag
 from .flexible_tools import register as register_flexible
 from .multimodal_tools import register as register_multimodal
+from .compare_tools import register as register_compare
+from .generate_tools import register as register_generate
+from .trace_tools import register as register_trace
 
 
 def register_all(mcp) -> None:
@@ -23,6 +26,9 @@ def register_all(mcp) -> None:
     register_rag(mcp)
     register_flexible(mcp)
     register_multimodal(mcp)
+    register_compare(mcp)
+    register_generate(mcp)
+    register_trace(mcp)
 
 
 __all__ = ["register_all"]
