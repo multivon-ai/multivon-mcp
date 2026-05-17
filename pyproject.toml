@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multivon-mcp"
+version = "0.1.0"
+description = "MCP server exposing multivon-eval + pdfhell as agent-callable tools. Drop into Claude Desktop, Cursor, Cline, or any MCP-compatible AI coding agent."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Multivon", email = "hello@multivon.ai" }]
+keywords = ["mcp", "llm", "evaluation", "agents", "claude", "cursor", "cline", "anthropic"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries",
+]
+
+# Hard deps. mcp[cli] brings the FastMCP server + the `mcp` CLI for
+# local testing. multivon-eval + pdfhell are the surfaces we wrap.
+dependencies = [
+    "mcp[cli]>=1.0",
+    "multivon-eval>=0.7.3",
+    "pdfhell>=0.1.0",
+]
+
+[project.scripts]
+multivon-mcp = "multivon_mcp.server:main"
+
+[project.urls]
+Homepage = "https://multivon.ai"
+Repository = "https://github.com/multivon-ai/multivon-mcp"
+Issues = "https://github.com/multivon-ai/multivon-mcp/issues"
+"Agent docs" = "https://multivon.ai/agents"
+
+[tool.setuptools.packages.find]
+include = ["multivon_mcp*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
