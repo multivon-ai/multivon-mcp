@@ -23,6 +23,21 @@ EXPECTED_TOOLS = {
     "eval_answer_accuracy",
     "eval_audit_pack",
     "eval_discover",
+    # 0.2.0 — compliance
+    "eval_pii_detection",
+    "eval_schema_compliance",
+    # 0.2.0 — safety
+    "eval_toxicity",
+    "eval_bias",
+    # 0.2.0 — RAG retrieval quality
+    "eval_context_precision",
+    "eval_context_recall",
+    # 0.2.0 — flexible / user-defined
+    "eval_g_eval",
+    "eval_custom_rubric",
+    # 0.2.0 — multimodal
+    "eval_vqa_faithfulness",
+    "eval_document_grounding",
 }
 
 

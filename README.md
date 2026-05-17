@@ -41,7 +41,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-Restart Claude. The 9 tools become available; ask Claude `"use multivon to evaluate this RAG output"` and it figures out which tool to call.
+Restart Claude. The 19 tools become available; ask Claude `"use multivon to evaluate this RAG output"` and it figures out which tool to call.
 
 ### Cursor
 
@@ -63,7 +63,7 @@ mcp dev multivon_mcp.server
 
 Opens the MCP Inspector UI in your browser. You can call any tool by name, see the JSON schemas, and watch the requests/responses.
 
-## The 9 tools
+## The 19 tools
 
 | Tool | What it does | API key needed |
 |---|---|---|
@@ -76,6 +76,16 @@ Opens the MCP Inspector UI in your browser. You can call any tool by name, see t
 | `eval_answer_accuracy` | QAG-graded semantic equivalence vs ground truth. | Yes (judge) |
 | `eval_tool_call_accuracy` | Deterministic agent tool-call correctness. No LLM. | No |
 | `eval_audit_pack` | Build a hash-chained, procurement-ready ZIP from a pdfhell run. | No |
+| `eval_pii_detection` | Local-only regex scan for PII (GDPR / CCPA / PIPEDA / HIPAA jurisdiction packs). No API calls. | No |
+| `eval_schema_compliance` | Validate an LLM output against a JSON Schema; reports per-field errors, not just valid/invalid. | No |
+| `eval_toxicity` | QAG-graded toxicity / harmful-content detection. | Yes (judge) |
+| `eval_bias` | QAG-graded bias detection across gender, race, politics, age, socioeconomic axes. | Yes (judge) |
+| `eval_context_precision` | RAG retrieval quality — are the retrieved chunks on-topic? | Yes (judge) |
+| `eval_context_recall` | RAG retrieval completeness — does retrieved context contain enough info to answer? | Yes (judge) |
+| `eval_g_eval` | G-Eval style holistic 0.0-1.0 scoring against a plain-English criterion. | Yes (judge) |
+| `eval_custom_rubric` | Score an output against your own list of yes/no quality checks. | Yes (judge) |
+| `eval_vqa_faithfulness` | Image-grounded visual-QA faithfulness — does the answer match what's in the image? | Yes (vision judge) |
+| `eval_document_grounding` | Multi-page document-grounded faithfulness for document-AI agents. | Yes (vision judge) |
 
 ## Example session
 
@@ -98,12 +108,17 @@ Claude: Your RAG hallucinated the "automatic upgrade" detail. The context
         from context" instructions.
 ```
 
-## Why these 9 tools (not all 44)
+## Why these 19 tools (not all 44)
 
-`eval_discover` returns the full 44-evaluator catalog, so the agent can always introspect everything. The 9 tools we expose directly are the ones agents actually call mid-edit:
+`eval_discover` returns the full 44-evaluator catalog, so the agent can always introspect everything. The 19 tools we expose directly are the ones agents actually call mid-edit:
 
-- RAG checks (faithfulness, hallucination, relevance) — most common need
-- Agent traces (tool_call_accuracy) — second most common
+- RAG generation checks (faithfulness, hallucination, relevance, answer_accuracy)
+- RAG retrieval checks (context_precision, context_recall)
+- Safety / fairness guardrails (toxicity, bias)
+- Compliance (pii_detection, schema_compliance) — local-only, no API egress
+- Flexible scoring (g_eval, custom_rubric) for user-defined rubrics
+- Multimodal (vqa_faithfulness, document_grounding) for vision agents
+- Agent traces (tool_call_accuracy)
 - Document AI (pdfhell.run, pdfhell.make) — for any RAG-on-PDFs flow
 - Audit pack — when procurement is involved
 - Discover — meta-capability for planning
