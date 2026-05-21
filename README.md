@@ -1,5 +1,12 @@
 # multivon-mcp
 
+[![PyPI](https://img.shields.io/pypi/v/multivon-mcp.svg)](https://pypi.org/project/multivon-mcp)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://pypi.org/project/multivon-mcp)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Downloads](https://static.pepy.tech/badge/multivon-mcp/month)](https://pepy.tech/project/multivon-mcp)
+
+**[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval)
+
 **MCP server that gives AI coding agents direct access to evaluation tools.** Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io)–compatible agent.
 
 When the agent is helping you build an LLM product, it can:
@@ -165,6 +172,19 @@ Exposing all 44 evaluators as MCP tools would bloat the agent's context window a
 - `pdfhell >= 0.1.0` — the adversarial-PDF benchmark this wraps
 
 All Apache 2.0.
+
+## The Multivon ecosystem
+
+Five public + one early-access package, all built on a shared evaluation engine:
+
+| Repo | What it is |
+|---|---|
+| [multivon-eval](https://github.com/multivon-ai/multivon-eval) | Python SDK — 44 evaluators + `bootstrap` CLI + `multivon_eval.auto`. The engine multivon-mcp wraps. |
+| [pdfhell](https://github.com/multivon-ai/pdfhell) | Adversarial PDFs that break AI document readers — exposed here as `pdfhell_run` + `pdfhell_make` tools |
+| **multivon-mcp** (you are here) | MCP server — 22 tools from multivon-eval + pdfhell |
+| [eval-action](https://github.com/multivon-ai/eval-action) | GitHub Action — runs the same evals on every PR |
+| [eval-framework-benchmark](https://github.com/multivon-ai/eval-framework-benchmark) | Reproducible head-to-head benchmark vs DeepEval + RAGAS |
+| multivon-guard *(early access)* | Local proxy that catches LLM coding agents leaking secrets / PII |
 
 ## License
 
