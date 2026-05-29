@@ -83,8 +83,12 @@ def register(mcp) -> None:
         before deciding to evaluate against it.
 
         Args:
-            trap: Trap family. One of: ``"hidden_ocr_mismatch"``,
-                ``"footnote_override"``, ``"split_table_across_pages"``.
+            trap: Trap family name. The full list of 17+ families is
+                discoverable via ``eval.discover`` (which is also the
+                source of truth — pdfhell adds families over time and
+                hard-coding them here would go stale). Examples include
+                ``"hidden_ocr_mismatch"``, ``"footnote_override"``, and
+                the autoresearch-discovered families in mini-v3/v4.
             seed: Integer seed. Same seed → byte-identical PDF + identical
                 answer key.
             return_pdf_bytes: If True, include the base64-encoded PDF bytes

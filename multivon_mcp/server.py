@@ -4,21 +4,15 @@
 transport mode — exactly what Claude Desktop / Cursor / Cline expect
 when configured via ``mcpServers``.
 
-The 8 tools registered:
+22 tools register across 6 surfaces (pdfhell · core eval · RAG · safety ·
+agent workflow · multimodal · compliance · flexible · discovery). The
+full list and per-tool docs come from ``eval.discover`` at runtime — that
+is the source of truth, this comment is just orientation.
 
-  pdfhell.run                     — evaluate a vision model on the suite
-  pdfhell.make                    — generate one trap PDF + answer key
-  eval.faithfulness               — QAG-graded RAG faithfulness
-  eval.hallucination              — QAG-graded hallucination detection
-  eval.relevance                  — QAG-graded answer-vs-question relevance
-  eval.tool_call_accuracy         — agent tool-call correctness (no LLM judge)
-  eval.answer_accuracy            — QAG-graded semantic-equivalence
-  eval.audit_pack                 — build a hash-chained audit ZIP from a run
-  eval.discover                   — full machine-readable capability catalog
-
-Why 8 (not 43): the narrow set is the surface AI coding agents actually
-need mid-edit. The full evaluator catalog stays available via
-``eval.discover`` for the agents that want to inspect everything.
+Why these 22 (not all 42+ evaluators in multivon-eval): the curated set
+is the surface AI coding agents actually need mid-edit. The full evaluator
+catalog stays available via ``eval.discover`` for agents that want to
+inspect everything.
 """
 from __future__ import annotations
 

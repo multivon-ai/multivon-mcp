@@ -55,8 +55,9 @@ def register(mcp) -> None:
                 ``"image/webp"``.
             judge_model: Provider:model for the vision judge. Must be
                 vision-capable. Default ``"google:gemini-2.5-flash"``
-                (cheap). Other options: ``"anthropic:claude-haiku-4-5"``,
-                ``"openai:gpt-4o-mini"``.
+                (cheap). Other vision-capable options: ``"openai:gpt-4o-mini"``
+                or ``"anthropic:claude-sonnet-4-6"`` (not haiku — Haiku 4-5
+                is not vision-capable).
 
         Returns:
             ``{"score": 0.0-1.0, "passed": bool, "reason": str,

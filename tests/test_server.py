@@ -95,7 +95,8 @@ def test_eval_discover_executes_locally():
     assert "traps" in catalog
     assert "suites" in catalog
     assert len(catalog["evaluators"]) >= 30  # we ship 43+
-    assert len(catalog["traps"]) == 3
+    # pdfhell ships 17 trap families today (mini-v4); allow growth.
+    assert len(catalog["traps"]) >= 17
     # Suites should include both smoke + mini with versioned names.
     suite_names = {s["name"] for s in catalog["suites"]}
     assert "smoke" in suite_names
