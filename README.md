@@ -7,6 +7,8 @@
 
 **[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval)
 
+These 22 tools are what an autonomous eval agent needs to do its job: discover its own capabilities (`eval.discover`), normalize traces from any source (`ingest_trace`), and run calibrated evaluators against them. The framework lives behind an MCP boundary because that's the future shape of eval — a swarm of specialized eval agents coordinating through the protocol, not a SaaS dashboard.
+
 **MCP server that gives AI coding agents direct access to evaluation tools.** Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io)–compatible agent.
 
 When the agent is helping you build an LLM product, it can:
@@ -168,7 +170,7 @@ Exposing all 44 evaluators as MCP tools would bloat the agent's context window a
 ## Dependencies
 
 - `mcp[cli] >= 1.0` — official MCP Python SDK + the `mcp dev` inspector
-- `multivon-eval >= 0.7.3` — the evaluator surface this wraps
+- `multivon-eval >= 0.9.4` — the evaluator surface this wraps
 - `pdfhell >= 0.1.0` — the adversarial-PDF benchmark this wraps
 
 All Apache 2.0.
