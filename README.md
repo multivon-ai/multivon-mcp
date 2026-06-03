@@ -111,6 +111,19 @@ Opens the MCP Inspector UI in your browser. You can call any tool by name, see t
 | `eval_vqa_faithfulness` | Image-grounded visual-QA faithfulness. | Yes (vision) |
 | `eval_document_grounding` | Multi-page document-grounded faithfulness for document-AI agents. | Yes (vision) |
 
+> **Agent traces.** `eval_tool_call_accuracy` and the other agent-trace
+> evaluators in `multivon-eval` (`ToolArgumentAccuracy`,
+> `ToolCallNecessity`, `TrajectoryEfficiency`, `AgentMemoryEval`,
+> `PlanQuality`, `TaskCompletion`, `StepFaithfulness`) take an
+> `agent_trace=[AgentStep(...)]` plus `expected_tool_calls=[...]` on
+> the case. Three-shape semantics matter: `expected_tool_calls=None`
+> skips, `[]` asserts "no tools called", and `[...]` checks the trace
+> contains the named calls in order. The MCP tool wraps this — pass
+> the trace JSON via `eval_ingest_trace` first to normalize it from
+> LangGraph / OpenAI Agents SDK / manual shapes. See the
+> [`multivon-eval` agent integrations](https://github.com/multivon-ai/multivon-eval/tree/main/multivon_eval/integrations)
+> for the source-of-truth tracer code.
+
 ### Flexible scoring
 
 | Tool | What it does | API key |
@@ -169,11 +182,39 @@ Exposing all 44 evaluators as MCP tools would bloat the agent's context window a
 
 ## Dependencies
 
+Hard pins (from `pyproject.toml`):
+
 - `mcp[cli] >= 1.0` — official MCP Python SDK + the `mcp dev` inspector
 - `multivon-eval >= 0.9.4` — the evaluator surface this wraps
 - `pdfhell >= 0.1.0` — the adversarial-PDF benchmark this wraps
 
+**Recommended (effective floor for full feature parity):**
+
+- `multivon-eval >= 0.9.8` — pulls in the corrected calibrated-threshold logic from the 0.9.7 hotfix (which affects what `eval_discover` reports and any tool that surfaces benchmark numbers in its docstring), plus the bundled Claude Code skills + `multivon-eval install-skills` CLI from 0.9.8.
+- `pdfhell >= 0.5.4` — pulls in the `mini-v4` 17-trap suite and the `pdfhell.research` autoresearch loop. The `pdfhell_run --suite mini-v4` tool path assumes these are present.
+
+The pyproject pins are kept loose so existing deployments don't break; pin the recommended floors yourself if you care about the corrected benchmark numbers or the new suites.
+
 All Apache 2.0.
+
+## MCP server vs Claude Code skills vs eval-action — which one do I use?
+
+`multivon-eval` ships three agent-facing surfaces. They overlap on what
+they call (the same evaluator catalog) but differ on *where the agent
+lives*.
+
+| Surface | Where the agent runs | Best for |
+|---|---|---|
+| **multivon-mcp** (this repo) | Any MCP-compatible client — Claude Desktop, Cursor, Cline, OpenCode, Claude Code | Mid-edit scoring inside an IDE or chat app. Agent calls `eval_faithfulness` / `eval_hallucination` / etc. directly as tools. |
+| **Claude Code skills** — `eval-bootstrap`, `eval-audit`, `eval-explain` (bundled in `multivon-eval >= 0.9.8`; install with `multivon-eval install-skills`) | Claude Code only | Workflow-shaped tasks: scaffold an eval suite from a project description, pre-PR regression checks against a baseline, explaining why a particular evaluator was picked. The skills know how to call `multivon-eval bootstrap` / use `compare_reports` / etc. so the agent doesn't have to figure it out from docs. |
+| **[eval-action](https://github.com/multivon-ai/eval-action)** | GitHub CI | Gate every PR on eval regressions automatically. Posts the Wilson-CI + McNemar verdict as a PR comment. |
+
+If you're building an LLM product and want the agent in your editor to
+score a RAG output without copy-pasting Python, use **multivon-mcp**.
+If you live in Claude Code and want the bootstrap → audit → explain
+loop wired up as native commands, use the **bundled skills**. If you
+want PR-time gating, use the **GitHub Action**. The three are
+complementary — most projects end up using all three.
 
 ## The Multivon ecosystem
 
