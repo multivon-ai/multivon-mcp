@@ -1,7 +1,7 @@
 """pdfhell-specific MCP tools.
 
-``pdfhell.run`` — evaluate a vision model against the adversarial PDF
-suite. ``pdfhell.make`` — generate one trap PDF + its answer key for
+``pdfhell_run`` — evaluate a vision model against the adversarial PDF
+suite. ``pdfhell_make`` — generate one trap PDF + its answer key for
 inspection or downstream use.
 
 Both tools call into pdfhell directly — same code that powers the CLI,
@@ -30,8 +30,12 @@ def register(mcp) -> None:
         Args:
             model: Provider:model spec, e.g. ``"anthropic:claude-sonnet-4-6"``,
                 ``"openai:gpt-4o"``, ``"google:gemini-2.5-flash"``.
-            suite: ``"smoke"`` (3 cases, ~10s) or ``"mini"`` (30 cases, ~$0.01
-                on Flash). Default ``"mini"``.
+            suite: Any suite from ``eval_discover``. Current suites:
+                ``"smoke"`` (3 cases, ~10s), ``"mini"`` (30 cases, ~$0.01
+                on Flash), ``"mini-v2"``, ``"mini-v3"``, the flagship
+                ``"mini-v4"`` (17 trap families, 510 cases), and
+                ``"mini-v4-sample"`` (170 cases — cheap reproduction of
+                mini-v4). Default ``"mini"``.
             workers: Parallel API requests. Default 4.
 
         Returns:
@@ -84,7 +88,7 @@ def register(mcp) -> None:
 
         Args:
             trap: Trap family name. The full list of 17+ families is
-                discoverable via ``eval.discover`` (which is also the
+                discoverable via ``eval_discover`` (which is also the
                 source of truth — pdfhell adds families over time and
                 hard-coding them here would go stale). Examples include
                 ``"hidden_ocr_mismatch"``, ``"footnote_override"``, and

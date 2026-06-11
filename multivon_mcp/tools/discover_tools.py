@@ -1,6 +1,6 @@
 """Capability-discovery MCP tool.
 
-``eval.discover`` returns the full machine-readable catalog of what
+``eval_discover`` returns the full machine-readable catalog of what
 this server can do — every evaluator, every trap family, every default
 threshold, every shipped calibration row. An agent calls this once at
 session start to plan against the available surface, then calls the

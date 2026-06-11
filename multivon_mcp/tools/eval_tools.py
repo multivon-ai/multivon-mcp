@@ -2,11 +2,11 @@
 
 Five evaluators chosen as the highest-value agent-callable surface:
 
-- ``eval.faithfulness`` — RAG output grounded in retrieved context?
-- ``eval.hallucination`` — output contains content NOT in context?
-- ``eval.relevance`` — output addresses the input question?
-- ``eval.tool_call_accuracy`` — agent's tool call matches expected?
-- ``eval.answer_accuracy`` — answer matches the expected ground truth?
+- ``eval_faithfulness`` — RAG output grounded in retrieved context?
+- ``eval_hallucination`` — output contains content NOT in context?
+- ``eval_relevance`` — output addresses the input question?
+- ``eval_tool_call_accuracy`` — agent's tool call matches expected?
+- ``eval_answer_accuracy`` — answer matches the expected ground truth?
 
 These map to ~5 lines of Python the agent would otherwise write itself.
 Wrapping them as MCP tools means the agent calls them by name instead

@@ -5,9 +5,9 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Downloads](https://static.pepy.tech/badge/multivon-mcp/month)](https://pepy.tech/project/multivon-mcp)
 
-**[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval)
+**[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval) · [Changelog](CHANGELOG.md)
 
-These 22 tools are what an autonomous eval agent needs to do its job: discover its own capabilities (`eval.discover`), normalize traces from any source (`ingest_trace`), and run calibrated evaluators against them. The framework lives behind an MCP boundary because that's the future shape of eval — a swarm of specialized eval agents coordinating through the protocol, not a SaaS dashboard.
+These 22 tools are what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from any source (`ingest_trace`), and run calibrated evaluators against them. The framework lives behind an MCP boundary because that's the future shape of eval — a swarm of specialized eval agents coordinating through the protocol, not a SaaS dashboard.
 
 **MCP server that gives AI coding agents direct access to evaluation tools.** Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io)–compatible agent.
 
@@ -31,7 +31,15 @@ Bare install pulls `multivon-eval`, `pdfhell`, and the MCP SDK. The provider SDK
 
 ## Configure your agent
 
-### Claude Desktop / Claude Code
+### Claude Code
+
+```bash
+claude mcp add multivon --env ANTHROPIC_API_KEY=sk-ant-... -- multivon-mcp
+```
+
+(Or add the same `mcpServers` snippet below to a project-level `.mcp.json` — Claude Code does **not** read `claude_desktop_config.json`.)
+
+### Claude Desktop
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
 
@@ -67,7 +75,7 @@ Same shape — point at the `multivon-mcp` console script.
 ### Local dev / debugging
 
 ```bash
-mcp dev multivon_mcp.server
+mcp dev multivon_mcp/server.py
 ```
 
 Opens the MCP Inspector UI in your browser. You can call any tool by name, see the JSON schemas, and watch the requests/responses.
@@ -171,7 +179,7 @@ Claude: Your RAG hallucinated the "automatic upgrade" detail. The context
 - Flexible scoring (g_eval, custom_rubric) for user-defined rubrics
 - Multimodal (vqa_faithfulness, document_grounding) for vision agents
 - Agent traces (tool_call_accuracy)
-- Document AI (pdfhell.run, pdfhell.make) — for any RAG-on-PDFs flow
+- Document AI (`pdfhell_run`, `pdfhell_make`) — for any RAG-on-PDFs flow
 - Audit pack — when procurement is involved
 - Discover — meta-capability for planning
 - Agent workflows (compare_runs, generate_cases, ingest_trace) — the loop that turns one-shot scoring into iterative improvement
