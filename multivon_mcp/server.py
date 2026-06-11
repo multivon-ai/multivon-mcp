@@ -40,6 +40,9 @@ def build_server() -> FastMCP:
             "(ANTHROPIC_API_KEY / OPENAI_API_KEY / GOOGLE_API_KEY)."
         ),
     )
+    # FastMCP's constructor doesn't expose version, so serverInfo would
+    # otherwise report the MCP SDK's version instead of ours.
+    mcp._mcp_server.version = __version__
     register_all(mcp)
     return mcp
 
