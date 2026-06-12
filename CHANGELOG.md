@@ -5,6 +5,19 @@ All notable changes to `multivon-mcp` are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] — 2026-06-13
+
+### Fixed
+
+- PyPI wheel now actually contains the 0.3.1-era fixes — they were committed
+  under the same version number and never published, so pip users still got
+  the old build (found by the release-readiness campaign): serverInfo reports
+  the package version instead of the MCP SDK's, `--version` prints correctly,
+  `mcp dev` works via the module-level `mcp` instance, tool names in
+  instructions/docstrings match the registered underscore names.
+- README: the `mcp dev multivon_mcp/server.py` instruction works from a clone
+  only; pip users get the one-liner that resolves the installed file path.
+
 ## [0.3.1] - 2026-06-03
 
 ### Fixed

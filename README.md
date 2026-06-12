@@ -74,8 +74,16 @@ Same shape — point at the `multivon-mcp` console script.
 
 ### Local dev / debugging
 
+From a clone of this repo:
+
 ```bash
 mcp dev multivon_mcp/server.py
+```
+
+From a pip install (the file lives in site-packages, so resolve it):
+
+```bash
+mcp dev "$(python -c 'import multivon_mcp.server as s; print(s.__file__)')"
 ```
 
 Opens the MCP Inspector UI in your browser. You can call any tool by name, see the JSON schemas, and watch the requests/responses.
