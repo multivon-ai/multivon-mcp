@@ -7,9 +7,9 @@
 
 **[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval) · [Changelog](CHANGELOG.md)
 
-These 22 tools are what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from any source (`ingest_trace`), and run calibrated evaluators against them. The framework lives behind an MCP boundary because that's the future shape of eval — a swarm of specialized eval agents coordinating through the protocol, not a SaaS dashboard.
+These 22 tools cover what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from any source (`ingest_trace`), and run calibrated evaluators against them. We put the framework behind an MCP boundary because we think eval ends up as specialized agents coordinating through the protocol rather than a SaaS dashboard.
 
-**MCP server that gives AI coding agents direct access to evaluation tools.** Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io)–compatible agent.
+An MCP server that gives AI coding agents direct access to evaluation tools. Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io)–compatible agent.
 
 When the agent is helping you build an LLM product, it can:
 
@@ -19,7 +19,7 @@ When the agent is helping you build an LLM product, it can:
 - Produce a hash-chained audit pack for procurement diligence
 - Discover the full evaluation capability catalog as JSON
 
-No copy-paste, no `python -c "..."`, no asking the agent to figure out the SDK calls.
+No copy-paste, and no asking the agent to figure out the SDK calls from `python -c "..."` one-liners.
 
 ## Install
 
@@ -192,7 +192,7 @@ Claude: Your RAG hallucinated the "automatic upgrade" detail. The context
 - Discover — meta-capability for planning
 - Agent workflows (compare_runs, generate_cases, ingest_trace) — the loop that turns one-shot scoring into iterative improvement
 
-The three new 0.3.0 tools matter because evals are most useful as a *loop*, not a single call: generate a starting suite from your own docs (`eval_generate_cases`), run your agent over it, score the trace (`eval_ingest_trace` → `eval_*`), make a fix, then verify the fix improved things vs. the baseline (`eval_compare_runs`). Agents need that whole loop callable from within a conversation — otherwise they fall back to ad-hoc judgment.
+The three new 0.3.0 tools exist because evals pay off as a loop: generate a starting suite from your own docs (`eval_generate_cases`), run your agent over it, score the trace (`eval_ingest_trace` → `eval_*`), make a fix, then verify the fix improved things vs. the baseline (`eval_compare_runs`). Agents need that whole loop callable from within a conversation, or they fall back to ad-hoc judgment.
 
 Exposing all 44 evaluators as MCP tools would bloat the agent's context window and overwhelm tool-selection. If you need an evaluator that's not directly exposed, the agent can still use `multivon-eval` as a library — `eval_discover` returns the import paths.
 
@@ -216,8 +216,8 @@ All Apache 2.0.
 ## MCP server vs Claude Code skills vs eval-action — which one do I use?
 
 `multivon-eval` ships three agent-facing surfaces. They overlap on what
-they call (the same evaluator catalog) but differ on *where the agent
-lives*.
+they call (the same evaluator catalog) but differ on where the agent
+lives.
 
 | Surface | Where the agent runs | Best for |
 |---|---|---|
@@ -226,11 +226,11 @@ lives*.
 | **[eval-action](https://github.com/multivon-ai/eval-action)** | GitHub CI | Gate every PR on eval regressions automatically. Posts the Wilson-CI + McNemar verdict as a PR comment. |
 
 If you're building an LLM product and want the agent in your editor to
-score a RAG output without copy-pasting Python, use **multivon-mcp**.
+score a RAG output without copy-pasting Python, use multivon-mcp.
 If you live in Claude Code and want the bootstrap → audit → explain
-loop wired up as native commands, use the **bundled skills**. If you
-want PR-time gating, use the **GitHub Action**. The three are
-complementary — most projects end up using all three.
+loop wired up as native commands, use the bundled skills. For PR-time
+gating, use the GitHub Action. Most projects end up using more than
+one.
 
 ## The Multivon ecosystem
 
