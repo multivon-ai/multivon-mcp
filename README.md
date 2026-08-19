@@ -7,37 +7,42 @@
 
 **[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval) · [Changelog](CHANGELOG.md)
 
-These 22 tools cover what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from any source (`ingest_trace`), and run calibrated evaluators against them. We put the framework behind an MCP boundary because we think eval ends up as specialized agents coordinating through the protocol rather than a SaaS dashboard.
+These 22 tools cover what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from supported sources (`eval_ingest_trace`), and run calibrated evaluators against them. We put the framework behind an MCP boundary because eval belongs in the agent's working loop, not behind a separate dashboard.
 
-An MCP server that gives AI coding agents direct access to evaluation tools. Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io)–compatible agent.
+An MCP server that gives AI coding agents direct access to evaluation tools. Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io/)–compatible agent.
 
 When the agent is helping you build an LLM product, it can:
 
 - Score a RAG output for hallucination without you writing the scaffolding
 - Generate an adversarial PDF on demand to test your document AI
 - Run the full pdfhell mini-suite against a model and analyse the results
-- Produce a hash-chained audit pack for procurement diligence
+- Produce a self-verifying audit pack with a SHA-256 file manifest
 - Discover the full evaluation capability catalog as JSON
 
 No copy-paste, and no asking the agent to figure out the SDK calls from `python -c "..."` one-liners.
 
+> **Current release: 0.3.2.** The repository's unreleased changes track MCP Python SDK 1.29.x, multivon-eval 0.16.1, and pdfhell 0.6.1. See the [changelog](CHANGELOG.md).
+
 ## Install
 
 ```bash
-pip install multivon-mcp
+pip install "mcp<2" multivon-mcp  # required by released 0.3.2
 ```
 
-Bare install pulls `multivon-eval`, `pdfhell`, and the MCP SDK. The provider SDKs (`anthropic`, `openai`, `google-genai`) come along too — bring your own API key in env.
+The next release carries this compatibility bound itself. Installation pulls
+`multivon-eval`, `pdfhell`, and the MCP SDK. The provider SDKs (`anthropic`,
+`openai`, `google-genai`) come along too — bring your own API key in env.
 
 ## Configure your agent
 
 ### Claude Code
 
 ```bash
-claude mcp add multivon --env ANTHROPIC_API_KEY=sk-ant-... -- multivon-mcp
+claude mcp add --transport stdio --scope user multivon -- multivon-mcp
+claude mcp get multivon
 ```
 
-(Or add the same `mcpServers` snippet below to a project-level `.mcp.json` — Claude Code does **not** read `claude_desktop_config.json`.)
+Set provider keys in your shell or secure environment before starting Claude Code. To share the server configuration with a project instead, use `--scope project`; Claude Code writes `.mcp.json` and supports environment-variable expansion there. It does **not** read `claude_desktop_config.json`.
 
 ### Claude Desktop
 
@@ -62,7 +67,7 @@ Restart Claude. The 22 tools become available; ask Claude `"use multivon to eval
 
 ### Cursor
 
-`cursor.json` or via Settings → MCP:
+`.cursor/mcp.json` or via Settings → MCP:
 
 ```json
 { "mcpServers": { "multivon": { "command": "multivon-mcp" } } }
@@ -97,7 +102,7 @@ Opens the MCP Inspector UI in your browser. You can call any tool by name, see t
 | `eval_discover` | Full machine-readable capability catalog (evaluators, traps, suites, calibration data, versions). Call first. | No |
 | `pdfhell_make` | Generate one adversarial PDF + its answer key. | No |
 | `pdfhell_run` | Run the pdfhell adversarial-PDF benchmark against a vision model. Returns pass rate, per-trap CIs, suite hash. | Yes (vision) |
-| `eval_audit_pack` | Build a hash-chained, procurement-ready ZIP from a pdfhell run. | No |
+| `eval_audit_pack` | Build a procurement-ready ZIP with a SHA-256 file manifest from a pdfhell run. | No |
 
 ### RAG generation & retrieval
 
@@ -116,7 +121,7 @@ Opens the MCP Inspector UI in your browser. You can call any tool by name, see t
 |---|---|---|
 | `eval_toxicity` | QAG-graded toxicity / harmful-content detection. | Yes |
 | `eval_bias` | QAG-graded bias across gender, race, politics, age, socioeconomic axes. | Yes |
-| `eval_pii_detection` | Local-only regex scan for PII (GDPR / CCPA / PIPEDA / HIPAA packs). | No |
+| `eval_pii_detection` | Local-only regex scan for PII (GDPR / CCPA / PIPEDA / HIPAA / DPDP packs). | No |
 | `eval_schema_compliance` | Validate an LLM output against a JSON Schema. | No |
 
 ### Agent & multimodal
@@ -133,10 +138,13 @@ Opens the MCP Inspector UI in your browser. You can call any tool by name, see t
 > `PlanQuality`, `TaskCompletion`, `StepFaithfulness`) take an
 > `agent_trace=[AgentStep(...)]` plus `expected_tool_calls=[...]` on
 > the case. Three-shape semantics matter: `expected_tool_calls=None`
-> skips, `[]` asserts "no tools called", and `[...]` checks the trace
-> contains the named calls in order. The MCP tool wraps this — pass
-> the trace JSON via `eval_ingest_trace` first to normalize it from
-> LangGraph / OpenAI Agents SDK / manual shapes. See the
+> skips, `[]` asserts "no tools called", and `[...]` checks for the
+> named calls. On repository `main` (shipping in the next release), the MCP
+> tool supports the same trace mode: normalize
+> trace JSON with `eval_ingest_trace`, then pass its `agent_trace` plus
+> `expected_tool_calls` to `eval_tool_call_accuracy`. Set
+> `require_order=true` when sequence matters or
+> `penalize_unexpected=true` for a strict allow-list. See the
 > [`multivon-eval` agent integrations](https://github.com/multivon-ai/multivon-eval/tree/main/multivon_eval/integrations)
 > for the source-of-truth tracer code.
 
@@ -198,18 +206,15 @@ Exposing all 44 evaluators as MCP tools would bloat the agent's context window a
 
 ## Dependencies
 
-Hard pins (from `pyproject.toml`):
+Tested runtime bounds (from `pyproject.toml`):
 
-- `mcp[cli] >= 1.0` — official MCP Python SDK + the `mcp dev` inspector
-- `multivon-eval >= 0.9.4` — the evaluator surface this wraps
-- `pdfhell >= 0.1.0` — the adversarial-PDF benchmark this wraps
+- `mcp[cli] >= 1.29, < 2` — official MCP Python SDK and Inspector. MCP 2.0 has a different server API and is intentionally excluded until this server migrates.
+- `multivon-eval >= 0.16.1` — the 44-evaluator engine, current report schema, and reasoning-judge fix.
+- `pdfhell >= 0.6.1` — the 17-family mini-v4 registry, corrected trap renderings, and current audit-pack schema.
 
-**Recommended (effective floor for full feature parity):**
-
-- `multivon-eval >= 0.9.8` — pulls in the corrected calibrated-threshold logic from the 0.9.7 hotfix (which affects what `eval_discover` reports and any tool that surfaces benchmark numbers in its docstring), plus the bundled Claude Code skills + `multivon-eval install-skills` CLI from 0.9.8.
-- `pdfhell >= 0.5.4` — pulls in the `mini-v4` 17-trap suite and the `pdfhell.research` autoresearch loop. The `pdfhell_run --suite mini-v4` tool path assumes these are present.
-
-The pyproject pins are kept loose so existing deployments don't break; pin the recommended floors yourself if you care about the corrected benchmark numbers or the new suites.
+These bounds are on repository `main` and will ship in the next release. For
+released 0.3.2, use `pip install "mcp<2" multivon-mcp` so pip does not resolve
+the incompatible MCP 2.0 server API.
 
 All Apache 2.0.
 
@@ -234,7 +239,7 @@ one.
 
 ## The Multivon ecosystem
 
-Five public + one early-access package, all built on a shared evaluation engine:
+Four public packages plus one closed early-access product, built around the same evaluation engine:
 
 | Repo | What it is |
 |---|---|
@@ -242,7 +247,6 @@ Five public + one early-access package, all built on a shared evaluation engine:
 | [pdfhell](https://github.com/multivon-ai/pdfhell) | Adversarial PDFs that break AI document readers — exposed here as `pdfhell_run` + `pdfhell_make` tools |
 | **multivon-mcp** (you are here) | MCP server — 22 tools from multivon-eval + pdfhell |
 | [eval-action](https://github.com/multivon-ai/eval-action) | GitHub Action — runs the same evals on every PR |
-| [eval-framework-benchmark](https://github.com/multivon-ai/eval-framework-benchmark) | Reproducible head-to-head benchmark vs DeepEval + RAGAS |
 | multivon-guard *(early access)* | Local proxy that catches LLM coding agents leaking secrets / PII |
 
 ## License

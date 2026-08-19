@@ -8,10 +8,7 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 from multivon_mcp.server import build_server
-
 
 EXPECTED_TOOLS = {
     "pdfhell_run",
@@ -52,8 +49,7 @@ def _tools():
 
 def test_all_expected_tools_registered():
     names = {t.name for t in _tools()}
-    missing = EXPECTED_TOOLS - names
-    assert not missing, f"missing tools: {missing}"
+    assert names == EXPECTED_TOOLS
 
 
 def test_every_tool_has_a_description():
@@ -69,8 +65,9 @@ def test_every_tool_has_a_description():
 def test_eval_discover_executes_locally():
     """eval_discover doesn't need provider API keys — it should run
     end-to-end and return a populated catalog."""
-    from multivon_mcp.tools.discover_tools import register
     from mcp.server.fastmcp import FastMCP
+
+    from multivon_mcp.tools.discover_tools import register
 
     mcp = FastMCP("test")
     register(mcp)
@@ -94,7 +91,16 @@ def test_eval_discover_executes_locally():
     assert "evaluators" in catalog
     assert "traps" in catalog
     assert "suites" in catalog
-    assert len(catalog["evaluators"]) >= 30  # we ship 43+
+    assert len(catalog["evaluators"]) == 44
+    assert {e["tier"] for e in catalog["evaluators"]} == {
+        "deterministic",
+        "llm_judge_qag",
+        "agent_trace",
+        "compliance",
+        "conversation",
+        "multimodal",
+        "consistency",
+    }
     # pdfhell ships 17 trap families today (mini-v4); allow growth.
     assert len(catalog["traps"]) >= 17
     # Suites should include both smoke + mini with versioned names.
@@ -150,6 +156,48 @@ def test_eval_tool_call_accuracy_no_api_key_needed():
         out = json.loads(text)
     assert out["score"] == 1.0
     assert out["passed"] is True
+
+
+def test_eval_tool_call_accuracy_accepts_ingested_trace_payload():
+    """The documented ingest -> score workflow must compose over MCP JSON."""
+    import json
+    mcp = build_server()
+    trace = [
+        {
+            "thought": "Find the record, then summarize it.",
+            "tool_calls": [
+                {"name": "lookup_record", "arguments": {"id": "R-42"}},
+                {"name": "summarize_record", "arguments": {}},
+            ],
+            "output": "Done",
+        },
+    ]
+    result = asyncio.run(
+        mcp.call_tool(
+            "eval_tool_call_accuracy",
+            {
+                "expected_tool_calls": ["lookup_record", "summarize_record"],
+                "agent_trace": trace,
+                "require_order": True,
+            },
+        )
+    )
+    if isinstance(result, tuple) and len(result) == 2:
+        _, out = result
+    else:
+        text = result[0].text if hasattr(result[0], "text") else str(result[0])
+        out = json.loads(text)
+    assert out["score"] == 1.0
+    assert out["passed"] is True
+
+
+def test_runtime_dependency_bounds_exclude_incompatible_mcp_2():
+    from pathlib import Path
+
+    pyproject = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
+    assert '"mcp[cli]>=1.29,<2"' in pyproject
+    assert '"multivon-eval>=0.16.1"' in pyproject
+    assert '"pdfhell>=0.6.1"' in pyproject
 
 
 def test_eval_compare_runs_executes_locally(tmp_path):
@@ -233,6 +281,72 @@ def test_eval_compare_runs_executes_locally(tmp_path):
     assert out["regressions"][0]["input"] == "Q2"
     assert out["pass_rate_delta"] < 0  # got worse
     assert out["paired_count"] == 2
+
+
+def test_eval_audit_pack_preserves_current_pdfhell_provenance(tmp_path, monkeypatch):
+    """Reconstructing a report must not erase API/rendering metadata."""
+    import json
+    import zipfile
+
+    import pdfhell.auditpack
+
+    captured = {}
+
+    def fake_build(report, cases_dir, out_path):
+        captured["report"] = report
+        manifest = {
+            "pdfhell_version": "0.6.1",
+            "model": report.model,
+            "suite": report.suite,
+            "suite_version": report.suite_version,
+            "suite_hash": report.suite_hash,
+            "n": report.n,
+            "passed": 0,
+            "pass_rate": report.pass_rate,
+            "pass_rate_ci_95": [0.0, 1.0],
+            "files": [],
+        }
+        with zipfile.ZipFile(out_path, "w") as zf:
+            zf.writestr("manifest.json", json.dumps(manifest))
+        return out_path
+
+    monkeypatch.setattr(pdfhell.auditpack, "build_audit_pack", fake_build)
+    run_path = tmp_path / "run.json"
+    run_path.write_text(json.dumps({
+        "model": "anthropic:test",
+        "suite": "mini-v4-sample",
+        "n": 1,
+        "pass_rate": 0.0,
+        "per_trap_pass": {},
+        "per_trap_fell_for_trap": {},
+        "refused_rate": 0.0,
+        "api_error_rate": 1.0,
+        "suite_version": "mini-v4-sample",
+        "suite_hash": "a451ce10",
+        "modality": "pixels",
+        "raster_dpi": 144,
+        "pdfium_build": "test-build",
+        "cases": [{
+            "case_id": "case-1", "trap_family": "hidden_ocr_mismatch",
+            "correct": False, "api_error": True,
+        }],
+    }))
+    cases_dir = tmp_path / "cases"
+    cases_dir.mkdir()
+    out_path = tmp_path / "audit.zip"
+
+    mcp = build_server()
+    asyncio.run(mcp.call_tool("eval_audit_pack", {
+        "run_json_path": str(run_path),
+        "cases_dir": str(cases_dir),
+        "output_zip_path": str(out_path),
+    }))
+    report = captured["report"]
+    assert report.api_error_rate == 1.0
+    assert report.cases[0].api_error is True
+    assert report.modality == "pixels"
+    assert report.raster_dpi == 144
+    assert report.pdfium_build == "test-build"
 
 
 def test_eval_ingest_trace_manual_executes_locally():

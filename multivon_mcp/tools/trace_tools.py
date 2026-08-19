@@ -56,7 +56,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-
 _VALID_FRAMEWORKS = ("langgraph", "openai_agents", "manual")
 
 

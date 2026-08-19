@@ -48,7 +48,7 @@ def register(mcp) -> None:
         Returns:
             ``{"score": 0.0-1.0, "passed": bool, "reason": str, "threshold": float}``.
         """
-        from multivon_eval import EvalCase, Faithfulness, JudgeConfig
+        from multivon_eval import EvalCase, Faithfulness
 
         judge = _parse_judge(judge_model)
         evaluator = Faithfulness(judge=judge)
@@ -74,7 +74,7 @@ def register(mcp) -> None:
         Returns:
             ``{"score": 0.0-1.0, "passed": bool, "reason": str, "threshold": float}``.
         """
-        from multivon_eval import EvalCase, Hallucination, JudgeConfig
+        from multivon_eval import EvalCase, Hallucination
 
         judge = _parse_judge(judge_model)
         evaluator = Hallucination(judge=judge)
@@ -101,7 +101,7 @@ def register(mcp) -> None:
         Returns:
             ``{"score": 0.0-1.0, "passed": bool, "reason": str, "threshold": float}``.
         """
-        from multivon_eval import EvalCase, Relevance, JudgeConfig
+        from multivon_eval import EvalCase, Relevance
 
         judge = _parse_judge(judge_model)
         evaluator = Relevance(judge=judge)
@@ -111,25 +111,68 @@ def register(mcp) -> None:
 
     @mcp.tool()
     def eval_tool_call_accuracy(
-        expected_tool: str,
-        actual_tool: str,
+        expected_tool: str | None = None,
+        actual_tool: str | None = None,
         expected_arguments: dict[str, Any] | None = None,
         actual_arguments: dict[str, Any] | None = None,
+        expected_tool_calls: list[str] | None = None,
+        agent_trace: list[dict[str, Any]] | None = None,
+        require_order: bool = False,
+        penalize_unexpected: bool = False,
     ) -> dict[str, Any]:
-        """Evaluate whether an agent called the right tool with the right arguments.
+        """Evaluate whether an agent called the expected tool or tool sequence.
 
-        Pure deterministic — no LLM judge needed. Compares the actual tool
-        name + arguments against expected.
+        Pure deterministic — no LLM judge needed. Two compatible modes:
+
+        - Single-call mode compares ``expected_tool`` / ``actual_tool`` and
+          optional argument dictionaries exactly.
+        - Trace mode consumes ``expected_tool_calls`` plus the canonical
+          ``agent_trace`` returned by ``eval_ingest_trace``. It can require
+          order and optionally penalize unexpected calls.
 
         Args:
-            expected_tool: Tool name the agent should have called.
-            actual_tool: Tool name the agent actually called.
-            expected_arguments: Dict of expected argument values (optional).
-            actual_arguments: Dict of argument values the agent passed (optional).
+            expected_tool: Single tool name the agent should have called.
+            actual_tool: Single tool name the agent actually called.
+            expected_arguments: Expected arguments for single-call mode.
+            actual_arguments: Actual arguments for single-call mode.
+            expected_tool_calls: Expected names for trace mode. An empty list
+                explicitly asserts that the agent should call no tools.
+            agent_trace: Canonical step dictionaries returned by
+                ``eval_ingest_trace``.
+            require_order: In trace mode, require expected names in order.
+            penalize_unexpected: In trace mode, lower the score for calls not
+                present in ``expected_tool_calls``.
 
         Returns:
-            ``{"score": 0.0 or 1.0, "passed": bool, "reason": str}``.
+            ``{"score": float, "passed": bool, "reason": str,
+            "evaluator": "tool_call_accuracy"}``, or an ``error`` dict when
+            the arguments do not form either mode.
         """
+        if agent_trace is not None or expected_tool_calls is not None:
+            if expected_tool_calls is None:
+                return {
+                    "error": "trace mode requires expected_tool_calls; use [] to assert no tools",
+                }
+            from multivon_eval import EvalCase, ToolCallAccuracy
+
+            from multivon_mcp.tools.trace_tools import _parse_canonical_steps
+
+            case = EvalCase(
+                input="",
+                agent_trace=_parse_canonical_steps(agent_trace or []),
+                expected_tool_calls=expected_tool_calls,
+            )
+            evaluator = ToolCallAccuracy(
+                require_order=require_order,
+                penalize_unexpected=penalize_unexpected,
+            )
+            return _result_dict(evaluator.evaluate(case, output=""))
+
+        if expected_tool is None or actual_tool is None:
+            return {
+                "error": "single-call mode requires expected_tool and actual_tool",
+            }
+
         tool_match = expected_tool == actual_tool
         arg_match = True
         reasons = []
@@ -171,7 +214,7 @@ def register(mcp) -> None:
         Returns:
             ``{"score": 0.0-1.0, "passed": bool, "reason": str}``.
         """
-        from multivon_eval import AnswerAccuracy, EvalCase, JudgeConfig
+        from multivon_eval import AnswerAccuracy, EvalCase
 
         judge = _parse_judge(judge_model)
         evaluator = AnswerAccuracy(judge=judge)

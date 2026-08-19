@@ -1,17 +1,17 @@
 """Tool modules. Each registers a small group of related MCP tools on
 the FastMCP server instance passed in."""
 
-from .pdfhell_tools import register as register_pdfhell
-from .eval_tools import register as register_eval
 from .audit_tools import register as register_audit
-from .discover_tools import register as register_discover
-from .compliance_tools import register as register_compliance
-from .safety_tools import register as register_safety
-from .rag_tools import register as register_rag
-from .flexible_tools import register as register_flexible
-from .multimodal_tools import register as register_multimodal
 from .compare_tools import register as register_compare
+from .compliance_tools import register as register_compliance
+from .discover_tools import register as register_discover
+from .eval_tools import register as register_eval
+from .flexible_tools import register as register_flexible
 from .generate_tools import register as register_generate
+from .multimodal_tools import register as register_multimodal
+from .pdfhell_tools import register as register_pdfhell
+from .rag_tools import register as register_rag
+from .safety_tools import register as register_safety
 from .trace_tools import register as register_trace
 
 

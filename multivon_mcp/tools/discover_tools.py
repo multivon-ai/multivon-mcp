@@ -28,26 +28,29 @@ def register(mcp) -> None:
         rather than guessing or hallucinating tool names.
 
         Returns:
-            A dict with three top-level keys:
+            A dict with six top-level keys:
 
             - ``evaluators``: every available multivon-eval evaluator,
-              with its tier, what inputs it needs, and (when shipped)
-              calibrated default thresholds per judge model.
+              with its category, import path, evaluator ID, and summary.
             - ``traps``: every pdfhell trap family, the failure mode each
               elicits, and the expected_failure_mode metadata.
             - ``suites``: every named pdfhell suite, the (trap_family,
               seed_count) breakdown, and the suite_hash for the canonical
               version.
+            - ``calibration``: shipped per-(evaluator, judge) threshold rows.
+            - ``version``: installed multivon-mcp, multivon-eval, and pdfhell
+              versions.
+            - ``server``: the stable server identifier.
         """
         import multivon_eval
-        from pdfhell.generators import GENERATORS, TRAP_FAMILIES
-        from pdfhell.suite import SUITES
 
         # ─── Evaluators ───────────────────────────────────────────────────
         # Walk multivon-eval's __all__ and collect any name whose object is
         # an Evaluator subclass. Keep the introspection shallow — we want
         # JSON-friendly schema, not a full reflection dump.
         from multivon_eval.evaluators.base import Evaluator
+        from pdfhell.generators import GENERATORS, TRAP_FAMILIES
+        from pdfhell.suite import SUITES
 
         evaluators: list[dict[str, Any]] = []
         for name in dir(multivon_eval):
@@ -109,7 +112,7 @@ def register(mcp) -> None:
                 }
                 for e in load_calibration().entries
             ]
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 - discovery must degrade, not fail
             calibration_entries = [{"error": f"could not load calibration: {exc}"}]
 
         return {
@@ -123,7 +126,7 @@ def register(mcp) -> None:
 
 
 def _classify_tier(name: str) -> str:
-    """Group evaluators into the 5 tiers documented on /eval."""
+    """Group evaluators into the seven categories documented on /eval."""
     deterministic = {
         "NotEmpty", "ExactMatch", "Contains", "RegexMatch", "JSONSchemaEval",
         "WordCount", "Latency", "MaxLatency", "BLEU", "ROUGE", "StartsWith",
@@ -144,10 +147,9 @@ def _classify_tier(name: str) -> str:
         "ConversationRelevance", "KnowledgeRetention",
         "ConversationCompleteness", "TurnConsistency",
     }
-    compliance_or_multimodal = {
-        "PIIEvaluator", "SchemaEvaluator", "VQAFaithfulness",
-        "DocumentGrounding",
-    }
+    compliance = {"PIIEvaluator", "SchemaEvaluator"}
+    multimodal = {"VQAFaithfulness", "DocumentGrounding"}
+    consistency = {"SelfConsistency"}
     if name in deterministic:
         return "deterministic"
     if name in llm_judge:
@@ -156,8 +158,12 @@ def _classify_tier(name: str) -> str:
         return "agent_trace"
     if name in conversation:
         return "conversation"
-    if name in compliance_or_multimodal:
-        return "compliance_multimodal"
+    if name in compliance:
+        return "compliance"
+    if name in multimodal:
+        return "multimodal"
+    if name in consistency:
+        return "consistency"
     return "other"
 
 
@@ -165,6 +171,7 @@ def _versions() -> dict[str, str]:
     """Return version info so an agent can pin against specific releases."""
     import multivon_eval
     import pdfhell
+
     from .. import __version__ as mcp_version
     return {
         "multivon_mcp": mcp_version,

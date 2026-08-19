@@ -1,7 +1,7 @@
 """Audit-pack MCP tool.
 
 Wraps pdfhell's audit-pack generation. The agent calls this after a
-pdfhell run to produce a procurement-ready ZIP with hash-chained
+pdfhell run to produce a procurement-ready ZIP with a SHA-256
 manifest, PDFs, answer keys, JUnit XML, and a human-readable README.
 """
 from __future__ import annotations
@@ -20,11 +20,13 @@ def register(mcp) -> None:
         cases_dir: str,
         output_zip_path: str,
     ) -> dict[str, Any]:
-        """Build a hash-chained audit ZIP from a pdfhell run.
+        """Build a self-verifying audit ZIP from a pdfhell run.
 
         Combines the run JSON, the case PDFs + answer keys, JUnit XML,
         and a SHA-256 manifest into one downloadable ZIP. Suitable for
-        attaching to a procurement diligence appendix.
+        attaching to a procurement diligence appendix. Anchor the manifest
+        hash outside the ZIP when you need evidence against deliberate
+        rewriting; the ZIP alone is self-verifying, not tamper-proof.
 
         Args:
             run_json_path: Path to a pdfhell run JSON (from ``pdfhell run --out``).
@@ -39,7 +41,7 @@ def register(mcp) -> None:
             the ZIP itself.
         """
         from pdfhell.auditpack import build_audit_pack
-        from pdfhell.scorer import SuiteReport, CaseScore
+        from pdfhell.scorer import CaseScore, SuiteReport
 
         run_path = Path(run_json_path).expanduser().resolve()
         if not run_path.is_file():
@@ -63,6 +65,7 @@ def register(mcp) -> None:
                 model_output=c.get("model_output", ""),
                 expected=c.get("expected", ""),
                 failure_mode=c.get("failure_mode", ""),
+                api_error=bool(c.get("api_error", False)),
             )
             for c in raw.get("cases", [])
         ]
@@ -74,9 +77,13 @@ def register(mcp) -> None:
             per_trap_pass=raw.get("per_trap_pass", {}),
             per_trap_fell_for_trap=raw.get("per_trap_fell_for_trap", {}),
             refused_rate=raw.get("refused_rate", 0.0),
+            api_error_rate=raw.get("api_error_rate", 0.0),
             cases=cases,
             suite_version=raw.get("suite_version", ""),
             suite_hash=raw.get("suite_hash", ""),
+            modality=raw.get("modality", "pdf"),
+            raster_dpi=raw.get("raster_dpi"),
+            pdfium_build=raw.get("pdfium_build", ""),
         )
 
         out_path = Path(output_zip_path).expanduser().resolve()

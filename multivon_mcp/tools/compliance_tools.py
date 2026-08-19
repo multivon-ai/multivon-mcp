@@ -38,7 +38,7 @@ def register(mcp) -> None:
             output: The LLM-generated text to scan.
             jurisdiction: Which extra pattern set to include. One of
                 ``"all"`` (default), ``"gdpr"``, ``"ccpa"``, ``"pipeda"``,
-                or ``"hipaa"``.
+                ``"hipaa"``, or ``"dpdp"`` (India).
             custom_patterns: Optional dict of ``{name: regex}`` to add to
                 the default library (e.g. ``{"employee_id": r"EMP-\\d{6}"}``).
             redact: If True, replace matched substrings with

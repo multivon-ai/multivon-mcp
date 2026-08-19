@@ -8,15 +8,16 @@ version = "0.3.2"
 description = "MCP server exposing multivon-eval + pdfhell as agent-callable tools. Drop into Claude Desktop, Cursor, Cline, or any MCP-compatible AI coding agent."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
 authors = [{ name = "Multivon", email = "hello@multivon.ai" }]
 keywords = ["mcp", "llm", "evaluation", "agents", "claude", "cursor", "cline", "anthropic"]
 classifiers = [
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries",
 ]
@@ -24,9 +25,9 @@ classifiers = [
 # Hard deps. mcp[cli] brings the FastMCP server + the `mcp` CLI for
 # local testing. multivon-eval + pdfhell are the surfaces we wrap.
 dependencies = [
-    "mcp[cli]>=1.0",
-    "multivon-eval>=0.9.4",
-    "pdfhell>=0.1.0",
+    "mcp[cli]>=1.29,<2",
+    "multivon-eval>=0.16.1",
+    "pdfhell>=0.6.1",
 ]
 
 [project.scripts]
