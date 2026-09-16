@@ -234,17 +234,29 @@ The three new 0.3.0 tools exist because evals pay off as a loop: generate a star
 
 Exposing all 44 evaluators as MCP tools would bloat the agent's context window and overwhelm tool-selection. If you need an evaluator that's not directly exposed, the agent can still use `multivon-eval` as a library — `eval_discover` returns the import paths.
 
+## Evaluate retained OpenTelemetry evidence
+
+The multivon-eval development checkout includes an
+[OTLP evidence bridge](https://docs.multivon.ai/guides/otel-evidence).
+Its example instruments an actual MCP stdio call with the official OpenTelemetry
+SDK, grades the retained trace, then passes the saved report and policy to
+`eval_acceptance_report` in published multivon-mcp 0.4.0. The complete synthetic
+fixture is accepted; missing capture-completeness evidence is indeterminate.
+No model API calls are required.
+
+This is an opt-in library integration, not automatic server instrumentation or a
+new MCP tool. The bridge is not included in multivon-eval 0.18.0; see its guide
+for the checkout installation, native capture requirements and limitations.
+
 ## Dependencies
 
 Tested runtime bounds (from `pyproject.toml`):
 
 - `mcp[cli] >= 1.29, < 2` — official MCP Python SDK and Inspector. MCP 2.0 has a different server API and is intentionally excluded until this server migrates.
-- `multivon-eval >= 0.18.0` — the 44-evaluator engine, current report schema, and reasoning-judge fix.
-- `pdfhell >= 0.6.2` — the 17-family mini-v4 registry, corrected trap renderings, and current audit-pack schema.
+- `multivon-eval >= 0.18.0, < 0.19` — the 44-evaluator engine, current report schema, and reasoning-judge fix.
+- `pdfhell >= 0.6.2, < 0.7` — the 17-family mini-v4 registry, corrected trap renderings, and current audit-pack schema.
 
-These bounds are on repository `main` and will ship in the next release. For
-released 0.3.2, use `pip install "mcp<2" multivon-mcp` so pip does not resolve
-the incompatible MCP 2.0 server API.
+These bounds ship in 0.4.0. Upgrade with `pip install -U multivon-mcp`.
 
 All Apache 2.0.
 
