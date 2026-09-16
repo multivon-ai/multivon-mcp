@@ -234,7 +234,7 @@ The three new 0.3.0 tools exist because evals pay off as a loop: generate a star
 
 Exposing all 44 evaluators as MCP tools would bloat the agent's context window and overwhelm tool-selection. If you need an evaluator that's not directly exposed, the agent can still use `multivon-eval` as a library — `eval_discover` returns the import paths.
 
-## Evaluate retained OpenTelemetry evidence
+## Evaluate saved execution evidence
 
 The multivon-eval development checkout includes an
 [OTLP evidence bridge](https://docs.multivon.ai/guides/otel-evidence).
@@ -247,6 +247,12 @@ No model API calls are required.
 This is an opt-in library integration, not automatic server instrumentation or a
 new MCP tool. The bridge is not included in multivon-eval 0.18.0; see its guide
 for the checkout installation, native capture requirements and limitations.
+
+The development [Gymnasium outcome bridge](https://docs.multivon.ai/guides/environment-outcomes)
+also produces reports this server can evaluate. Three actual stdio calls verified
+accept, reject and indeterminate decisions from saved SQLite outcome evidence.
+The adapter checks persisted state and forbidden changes; it is a development
+preview, not part of the server's pinned multivon-eval 0.18.0 dependency.
 
 ## Dependencies
 
