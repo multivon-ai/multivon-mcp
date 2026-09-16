@@ -4,12 +4,12 @@
 transport mode — exactly what Claude Desktop / Cursor / Cline expect
 when configured via ``mcpServers``.
 
-22 tools register across 9 surfaces (pdfhell · core eval · RAG · safety ·
+23 tools register across 9 surfaces (pdfhell · core eval · RAG · safety ·
 agent workflow · multimodal · compliance · flexible · discovery). The
 full list and per-tool docs come from ``eval_discover`` at runtime — that
 is the source of truth, this comment is just orientation.
 
-Why these 22 (not all 44 evaluators in multivon-eval): the curated set
+Why these 23 (not all 44 evaluators in multivon-eval): the curated set
 is the surface AI coding agents actually need mid-edit. The full evaluator
 catalog stays available via ``eval_discover`` for agents that want to
 inspect everything.
@@ -36,6 +36,9 @@ def build_server() -> FastMCP:
         instructions=(
             "Multivon's evaluation toolkit for AI agents. Use eval_discover() "
             "at session start to see every available evaluator + trap family. "
+            "Use eval_acceptance_report for release decisions from saved evidence; "
+            "comparison p-values alone do not establish acceptance. A skipped or "
+            "errored evaluator has measured=false and cannot establish a pass. "
             "For RAG outputs, prefer eval_faithfulness + eval_hallucination. "
             "For agent traces, normalize with eval_ingest_trace and pass its "
             "agent_trace to eval_tool_call_accuracy. For document AI, "

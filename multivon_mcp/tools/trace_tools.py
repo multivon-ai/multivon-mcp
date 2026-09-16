@@ -107,7 +107,9 @@ def register(mcp) -> None:
         if framework == "openai_agents" and "new_items" in trace_json:
             steps = _parse_openai_agents_new_items(trace_json["new_items"])
         else:
-            steps = _parse_canonical_steps(trace_json.get("steps") or [])
+            if "steps" not in trace_json or not isinstance(trace_json["steps"], list):
+                raise ValueError("Trace requires an explicit steps list; use [] for a measured empty trace")
+            steps = _parse_canonical_steps(trace_json["steps"])
 
         return {
             "input": trace_json.get("input", ""),

@@ -7,7 +7,7 @@
 
 **[Docs](https://docs.multivon.ai/mcp)** · [Website](https://multivon.ai/agents) · [PyPI](https://pypi.org/project/multivon-mcp) · [multivon-eval (engine)](https://github.com/multivon-ai/multivon-eval) · [Changelog](CHANGELOG.md)
 
-These 22 tools cover what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from supported sources (`eval_ingest_trace`), and run calibrated evaluators against them. We put the framework behind an MCP boundary because eval belongs in the agent's working loop, not behind a separate dashboard.
+These 23 tools cover what an autonomous eval agent needs to do its job: discover its own capabilities (`eval_discover`), normalize traces from supported sources (`eval_ingest_trace`), and run evaluators against them, with calibration evidence specific to the tested task. We put the framework behind an MCP boundary because eval belongs in the agent's working loop, not behind a separate dashboard.
 
 An MCP server that gives AI coding agents direct access to evaluation tools. Drop into Claude Desktop, Claude Code, Cursor, Cline, or any [Model Context Protocol](https://modelcontextprotocol.io/)–compatible agent.
 
@@ -21,12 +21,12 @@ When the agent is helping you build an LLM product, it can:
 
 No copy-paste, and no asking the agent to figure out the SDK calls from `python -c "..."` one-liners.
 
-> **Current release: 0.3.2.** The repository's unreleased changes track MCP Python SDK 1.29.x, multivon-eval 0.16.1, and pdfhell 0.6.1. See the [changelog](CHANGELOG.md).
+> **Current release: 0.4.0.** Tested with MCP Python SDK 1.29.x, multivon-eval 0.18.0, and pdfhell 0.6.2. See the [changelog](CHANGELOG.md).
 
 ## Install
 
 ```bash
-pip install "mcp<2" multivon-mcp  # required by released 0.3.2
+pip install "multivon-mcp==0.4.0"
 ```
 
 The next release carries this compatibility bound itself. Installation pulls
@@ -63,7 +63,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 }
 ```
 
-Restart Claude. The 22 tools become available; ask Claude `"use multivon to evaluate this RAG output"` and it figures out which tool to call.
+Restart Claude. The 23 tools become available; ask Claude `"use multivon to evaluate this RAG output"` and it figures out which tool to call.
 
 ### Cursor
 
@@ -93,7 +93,7 @@ mcp dev "$(python -c 'import multivon_mcp.server as s; print(s.__file__)')"
 
 Opens the MCP Inspector UI in your browser. You can call any tool by name, see the JSON schemas, and watch the requests/responses.
 
-## The 22 tools
+## The 23 tools
 
 ### Discovery & document AI
 
@@ -159,7 +159,8 @@ Opens the MCP Inspector UI in your browser. You can call any tool by name, see t
 
 | Tool | What it does | API key |
 |---|---|---|
-| `eval_compare_runs` | Diff two eval report JSONs — pass-rate delta, per-case regressions/improvements, McNemar p-value. Use after every fix to confirm it actually helped. | No |
+| `eval_acceptance_report` | Apply required-check, coverage and slice policy to a saved report; returns accept/reject/indeterminate. | No |
+| `eval_compare_runs` | Diff two eval report JSONs — pass-rate delta, per-case regressions/improvements, McNemar p-value. Includes identity warnings; inconclusive comparisons cannot confirm improvement. | No |
 | `eval_generate_cases` | Generate N eval cases (input / expected_output / context) from a chunk of source text. Eliminates the cold-start when building a new suite. | Yes (judge) |
 | `eval_ingest_trace` | Convert a JSON agent trace (LangGraph / OpenAI Agents / manual) into an EvalCase payload. Use to score trajectories your agent just executed. | No |
 
@@ -184,9 +185,38 @@ Claude: Your RAG hallucinated the "automatic upgrade" detail. The context
         from context" instructions.
 ```
 
-## Why these 22 tools (not all 44)
+## Release decisions from saved evidence
 
-`eval_discover` returns the full 44-evaluator catalog, so the agent can always introspect everything. The 22 tools we expose directly are the ones agents actually call mid-edit:
+Use `eval_acceptance_report(report_json_path, policy_json_path)` to apply the
+same `multivon.policy/v1` contract used by the CLI and CI action. It makes no
+model calls. The result includes `decision` (`accept`, `reject`, `indeterminate`),
+`exit_code`, `policy_digest`, `measurements` and `findings`. Malformed files or
+policies produce an MCP tool error, not an accepted result. See the
+[acceptance policy guide](https://docs.multivon.ai/guides/acceptance-policies).
+
+Comparison is diagnostic: `eval_compare_runs` retains `identity_verified` and
+`identity_issues`. Missing or incompatible evidence suppresses the paired
+p-value. A large p-value does not prove equivalence, and an unchanged failing
+application still needs an absolute release contract.
+
+Evaluator responses include `status`, `measured` and original `metadata`.
+For skipped or errored measurements, `score` and `passed` are **null**. Do not
+coerce them into an ordinary pass or fail. Missing `agent_trace` means unknown;
+provide `agent_trace: []` only for an observed empty trajectory. Trace ingestion
+also requires an explicit `steps` list.
+
+In single-call accuracy mode, supplied expected arguments must match exactly:
+extra keys, absent null-valued keys and changed JSON types fail. Omitting
+`expected_arguments` explicitly selects tool-name-only comparison. Trace mode
+checks tool names/order, not argument correctness or external side effects.
+
+These response semantics change in 0.4.0. Update clients that assume `passed`
+and `score` are always measured values. The stdio integration test exercises
+real initialization, discovery, acceptance, missing evidence and tool errors.
+
+## Why these 23 tools (not all 44)
+
+`eval_discover` returns the full 44-evaluator catalog, so the agent can always introspect everything. The 23 tools we expose directly are the ones agents actually call mid-edit:
 
 - RAG generation checks (faithfulness, hallucination, relevance, answer_accuracy)
 - RAG retrieval checks (context_precision, context_recall)
@@ -209,8 +239,8 @@ Exposing all 44 evaluators as MCP tools would bloat the agent's context window a
 Tested runtime bounds (from `pyproject.toml`):
 
 - `mcp[cli] >= 1.29, < 2` — official MCP Python SDK and Inspector. MCP 2.0 has a different server API and is intentionally excluded until this server migrates.
-- `multivon-eval >= 0.16.1` — the 44-evaluator engine, current report schema, and reasoning-judge fix.
-- `pdfhell >= 0.6.1` — the 17-family mini-v4 registry, corrected trap renderings, and current audit-pack schema.
+- `multivon-eval >= 0.18.0` — the 44-evaluator engine, current report schema, and reasoning-judge fix.
+- `pdfhell >= 0.6.2` — the 17-family mini-v4 registry, corrected trap renderings, and current audit-pack schema.
 
 These bounds are on repository `main` and will ship in the next release. For
 released 0.3.2, use `pip install "mcp<2" multivon-mcp` so pip does not resolve
@@ -245,7 +275,7 @@ Four public packages plus one closed early-access product, built around the same
 |---|---|
 | [multivon-eval](https://github.com/multivon-ai/multivon-eval) | Python SDK — 44 evaluators + `bootstrap` CLI + `multivon_eval.auto`. The engine multivon-mcp wraps. |
 | [pdfhell](https://github.com/multivon-ai/pdfhell) | Adversarial PDFs that break AI document readers — exposed here as `pdfhell_run` + `pdfhell_make` tools |
-| **multivon-mcp** (you are here) | MCP server — 22 tools from multivon-eval + pdfhell |
+| **multivon-mcp** (you are here) | MCP server — 23 tools from multivon-eval + pdfhell |
 | [eval-action](https://github.com/multivon-ai/eval-action) | GitHub Action — runs the same evals on every PR |
 | multivon-guard *(early access)* | Local proxy that catches LLM coding agents leaking secrets / PII |
 

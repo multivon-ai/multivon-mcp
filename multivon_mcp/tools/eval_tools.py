@@ -16,6 +16,7 @@ auditable, and matches our calibration data automatically.
 from __future__ import annotations
 
 from typing import Any
+from ._results import result_dict as _result_dict
 
 
 def register(mcp) -> None:
@@ -54,7 +55,7 @@ def register(mcp) -> None:
         evaluator = Faithfulness(judge=judge)
         case = EvalCase(input=input, context=context)
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
     @mcp.tool()
     def eval_hallucination(
@@ -80,7 +81,7 @@ def register(mcp) -> None:
         evaluator = Hallucination(judge=judge)
         case = EvalCase(input="", context=context)
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
     @mcp.tool()
     def eval_relevance(
@@ -107,7 +108,7 @@ def register(mcp) -> None:
         evaluator = Relevance(judge=judge)
         case = EvalCase(input=input)
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
     @mcp.tool()
     def eval_tool_call_accuracy(
@@ -159,40 +160,37 @@ def register(mcp) -> None:
 
             case = EvalCase(
                 input="",
-                agent_trace=_parse_canonical_steps(agent_trace or []),
+                agent_trace=_parse_canonical_steps(agent_trace) if agent_trace is not None else None,
                 expected_tool_calls=expected_tool_calls,
             )
             evaluator = ToolCallAccuracy(
                 require_order=require_order,
                 penalize_unexpected=penalize_unexpected,
             )
-            return _result_dict(evaluator.evaluate(case, output=""))
+            return _result_dict(evaluator.evaluate(case, output=""), evaluator)
 
         if expected_tool is None or actual_tool is None:
             return {
                 "error": "single-call mode requires expected_tool and actual_tool",
             }
 
+        import json
         tool_match = expected_tool == actual_tool
-        arg_match = True
-        reasons = []
-        reasons.append(f"tool name: {'✓' if tool_match else '✗'} expected={expected_tool!r}, got={actual_tool!r}")
-        if expected_arguments is not None or actual_arguments is not None:
-            exp = expected_arguments or {}
-            act = actual_arguments or {}
-            for k, v in exp.items():
-                if act.get(k) != v:
-                    arg_match = False
-                    reasons.append(f"arg {k!r}: ✗ expected={v!r}, got={act.get(k)!r}")
-                else:
-                    reasons.append(f"arg {k!r}: ✓")
-        score = 1.0 if (tool_match and arg_match) else 0.0
-        return {
-            "score": score,
-            "passed": score >= 0.5,
-            "reason": "\n".join(reasons),
-            "evaluator": "tool_call_accuracy",
-        }
+        if expected_arguments is None:
+            arg_match = True
+            scope = "tool_name_only"
+        else:
+            # Canonical JSON comparison preserves the distinction between JSON
+            # booleans/numbers and between a missing key and an explicit null.
+            arg_match = actual_arguments is not None and json.dumps(
+                expected_arguments, sort_keys=True, allow_nan=False) == json.dumps(
+                actual_arguments, sort_keys=True, allow_nan=False)
+            scope = "tool_name_and_exact_arguments"
+        passed = tool_match and arg_match
+        return {"score": float(passed), "passed": passed,
+                "status": "passed" if passed else "failed", "measured": True,
+                "reason": f"Tool name matches: {tool_match}; arguments match: {arg_match}",
+                "evaluator": "tool_call_accuracy", "comparison": scope}
 
     @mcp.tool()
     def eval_answer_accuracy(
@@ -220,7 +218,7 @@ def register(mcp) -> None:
         evaluator = AnswerAccuracy(judge=judge)
         case = EvalCase(input="", expected_output=expected_answer)
         result = evaluator.evaluate(case, actual_answer)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
 
 # ─── helpers ───────────────────────────────────────────────────────────────
@@ -245,14 +243,3 @@ def _parse_judge(spec: str):
         model=model.strip(),
         temperature=0.0,
     )
-
-
-def _result_dict(result) -> dict[str, Any]:
-    """Convert a multivon-eval EvalResult into a JSON-friendly dict."""
-    return {
-        "score": result.score,
-        "passed": result.passed,
-        "reason": result.reason,
-        "threshold": getattr(result, "threshold", None),
-        "evaluator": result.evaluator,
-    }

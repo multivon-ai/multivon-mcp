@@ -7,12 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-09-17
+
+### Evidence decisions
+
+- Add `eval_acceptance_report`, reusing the engine's versioned policy and saved
+  trials. It returns accept/reject/indeterminate with coverage and policy digest
+  without model calls. Invalid files/configuration are MCP tool errors.
+- Comparison responses retain identity verification/issues and distinguish an
+  exploratory relative comparison from an absolute acceptance decision.
+- Evaluator responses preserve metadata and expose status/measured. Skipped or
+  errored results return null score/passed instead of a misleading binary verdict.
+- Single-tool arguments compare exactly, including extra keys, missing nulls and
+  JSON types. When expected arguments are omitted, the scope is tool-name-only.
+- Missing trace observations remain missing; callers must provide an explicit
+  empty list to assert that no tools were called.
+
 ### Fixed
 
 - Constrain the MCP Python SDK to the tested 1.x line (`>=1.29,<2`). A fresh
   install had begun resolving MCP 2.0, where the server's FastMCP import path
   no longer exists, so the console script failed before registering tools.
-- Raise the runtime floors to `multivon-eval >= 0.16.1` and `pdfhell >= 0.6.1`
+- Raise the runtime floors to `multivon-eval >= 0.18.0,<0.19` and `pdfhell >= 0.6.2,<0.7`
   so a bare install actually contains the evaluator, suite, and schema surface
   documented by `eval_discover` and the README.
 - `eval_discover` now reports the SDK's seven evaluator categories separately

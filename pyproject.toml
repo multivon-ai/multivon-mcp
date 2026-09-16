@@ -1,14 +1,15 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "multivon-mcp"
-version = "0.3.2"
+version = "0.4.0"
 description = "MCP server exposing multivon-eval + pdfhell as agent-callable tools. Drop into Claude Desktop, Cursor, Cline, or any MCP-compatible AI coding agent."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [{ name = "Multivon", email = "hello@multivon.ai" }]
 keywords = ["mcp", "llm", "evaluation", "agents", "claude", "cursor", "cline", "anthropic"]
 classifiers = [
@@ -26,8 +27,8 @@ classifiers = [
 # local testing. multivon-eval + pdfhell are the surfaces we wrap.
 dependencies = [
     "mcp[cli]>=1.29,<2",
-    "multivon-eval>=0.16.1",
-    "pdfhell>=0.6.1",
+    "multivon-eval>=0.18.0,<0.19",
+    "pdfhell>=0.6.2,<0.7",
 ]
 
 [project.scripts]

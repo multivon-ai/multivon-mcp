@@ -17,6 +17,7 @@ The multivon-eval evaluators themselves read images from
 from __future__ import annotations
 
 from typing import Any
+from ._results import result_dict as _result_dict
 
 
 def register(mcp) -> None:
@@ -56,8 +57,8 @@ def register(mcp) -> None:
             judge_model: Provider:model for the vision judge. Must be
                 vision-capable. Default ``"google:gemini-2.5-flash"``
                 (cheap). Other vision-capable options: ``"openai:gpt-4o-mini"``
-                or ``"anthropic:claude-sonnet-4-6"`` (not haiku — Haiku 4-5
-                is not vision-capable).
+                or ``"anthropic:claude-sonnet-4-6"``. Haiku 4.5 also supports
+                image input; verify task quality on your own held-out cases.
 
         Returns:
             ``{"score": 0.0-1.0, "passed": bool, "reason": str,
@@ -75,7 +76,7 @@ def register(mcp) -> None:
         evaluator = VQAFaithfulness(judge=judge)
         case = EvalCase(input=input, metadata={"image_url": img_src})
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
     @mcp.tool()
     def eval_document_grounding(
@@ -124,7 +125,7 @@ def register(mcp) -> None:
         evaluator = DocumentGrounding(judge=judge)
         case = EvalCase(input=input, metadata={"images": sources})
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
 
 def _resolve_image_arg(
@@ -165,13 +166,3 @@ def _parse_judge(spec: str):
         model=model.strip(),
         temperature=0.0,
     )
-
-
-def _result_dict(result) -> dict[str, Any]:
-    return {
-        "score": result.score,
-        "passed": result.passed,
-        "reason": result.reason,
-        "threshold": getattr(result, "threshold", None),
-        "evaluator": result.evaluator,
-    }

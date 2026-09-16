@@ -37,6 +37,7 @@ EXPECTED_TOOLS = {
     "eval_document_grounding",
     # 0.3.0 — agent workflows
     "eval_compare_runs",
+    "eval_acceptance_report",
     "eval_generate_cases",
     "eval_ingest_trace",
 }
@@ -196,8 +197,8 @@ def test_runtime_dependency_bounds_exclude_incompatible_mcp_2():
 
     pyproject = (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text()
     assert '"mcp[cli]>=1.29,<2"' in pyproject
-    assert '"multivon-eval>=0.16.1"' in pyproject
-    assert '"pdfhell>=0.6.1"' in pyproject
+    assert '"multivon-eval>=0.18.0,<0.19"' in pyproject
+    assert '"pdfhell>=0.6.2,<0.7"' in pyproject
 
 
 def test_eval_compare_runs_executes_locally(tmp_path):

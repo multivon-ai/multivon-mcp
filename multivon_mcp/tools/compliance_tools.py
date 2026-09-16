@@ -12,6 +12,7 @@ outputs without exfiltrating customer data".
 from __future__ import annotations
 
 from typing import Any
+from ._results import result_dict as _result_dict
 
 
 def register(mcp) -> None:
@@ -57,7 +58,7 @@ def register(mcp) -> None:
         )
         case = EvalCase(input="")
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
     @mcp.tool()
     def eval_schema_compliance(
@@ -93,15 +94,4 @@ def register(mcp) -> None:
         evaluator = SchemaEvaluator(schema=schema, strict=strict)
         case = EvalCase(input="")
         result = evaluator.evaluate(case, output)
-        return _result_dict(result)
-
-
-def _result_dict(result) -> dict[str, Any]:
-    """Convert a multivon-eval EvalResult into a JSON-friendly dict."""
-    return {
-        "score": result.score,
-        "passed": result.passed,
-        "reason": result.reason,
-        "threshold": getattr(result, "threshold", None),
-        "evaluator": result.evaluator,
-    }
+        return _result_dict(result, evaluator)

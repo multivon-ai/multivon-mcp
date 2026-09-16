@@ -1,21 +1,4 @@
-"""Eval report comparison MCP tools.
-
-Wraps :func:`multivon_eval.compare.compare_reports` so an agent can ask
-"did my change actually improve faithfulness vs the baseline run?" and
-get a structured answer without writing scaffolding code itself.
-
-The agent-facing workflow:
-
-  1. Run your eval suite once, save the report JSON (``report.to_json()``)
-     as ``baseline.json``.
-  2. Make your fix, re-run the suite, save the new JSON as ``new.json``.
-  3. Call ``eval_compare_runs(baseline.json, new.json)`` from the agent.
-  4. The agent sees the per-case regressions list and decides what to
-     iterate on next.
-
-Returns include the McNemar p-value so the agent can distinguish a real
-improvement from small-sample noise.
-"""
+"""Compare saved reports and apply the engine's explicit acceptance contract."""
 from __future__ import annotations
 
 import json
@@ -34,11 +17,11 @@ def register(mcp) -> None:
         """Compare two multivon-eval report JSONs and return a structured diff.
 
         Loads both reports from disk (the JSON produced by
-        ``EvalReport.to_json()``), pairs cases by ``case_input``, and
+        ``EvalReport.to_json()``), pairs cases by stable ID and case digest, and
         returns pass-rate / average-score deltas plus the per-case
         ``regressions`` and ``improvements`` lists. Includes a McNemar
-        p-value so the agent can tell a real shift from small-sample
-        noise.
+        p-value only when pairing evidence supports it. A large p-value
+        does not establish equivalence. Legacy reports remain diagnostic.
 
         Use this when you've made a prompt / retrieval / model change
         and want to know if the new run actually improved over the
@@ -90,9 +73,28 @@ def register(mcp) -> None:
             "regressions": d["regressions"],
             "improvements": d["improvements"],
             "mcnemar_p_value": d.get("mcnemar_p"),
+            "identity_verified": d["identity_verified"],
+            "identity_issues": d["identity_issues"],
+            "interpretation": "Exploratory paired comparison, not an absolute acceptance decision",
             "baseline": d["baseline"],
             "proposal": d["proposal"],
             "paired_count": d["paired_count"],
             "added_count": d["added_count"],
             "removed_count": d["removed_count"],
         }
+
+    @mcp.tool()
+    def eval_acceptance_report(report_json_path: str, policy_json_path: str) -> dict[str, Any]:
+        """Apply a versioned acceptance policy to saved evidence without model calls.
+
+        Read a full EvalReport JSON and a multivon.policy/v1 JSON policy. Return
+        accept, reject, or indeterminate, the policy digest, measured coverage,
+        per-slice results and findings. Missing required checks or trials cannot
+        pass. A known quality failure can reject even with incomplete evidence.
+        The returned exit_code is the policy result, not the MCP process status.
+        Input/configuration failures are MCP tool errors, never accepted reports.
+        """
+        from multivon_eval import AcceptancePolicy, EvalReport
+        report = EvalReport.from_dict(json.loads(Path(report_json_path).read_text(encoding="utf-8")))
+        policy = AcceptancePolicy.from_dict(json.loads(Path(policy_json_path).read_text(encoding="utf-8")))
+        return policy.evaluate(report).to_dict()

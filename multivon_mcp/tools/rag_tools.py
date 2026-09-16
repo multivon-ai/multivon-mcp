@@ -10,6 +10,7 @@ half — for that, see ``eval_faithfulness`` / ``eval_hallucination``).
 from __future__ import annotations
 
 from typing import Any
+from ._results import result_dict as _result_dict
 
 
 def register(mcp) -> None:
@@ -46,7 +47,7 @@ def register(mcp) -> None:
         evaluator = ContextPrecision(judge=judge)
         case = EvalCase(input=input, context=context)
         result = evaluator.evaluate(case, output="")
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
     @mcp.tool()
     def eval_context_recall(
@@ -82,7 +83,7 @@ def register(mcp) -> None:
             input=input, context=context, expected_output=expected_answer
         )
         result = evaluator.evaluate(case, output="")
-        return _result_dict(result)
+        return _result_dict(result, evaluator)
 
 
 def _parse_judge(spec: str):
@@ -99,13 +100,3 @@ def _parse_judge(spec: str):
         model=model.strip(),
         temperature=0.0,
     )
-
-
-def _result_dict(result) -> dict[str, Any]:
-    return {
-        "score": result.score,
-        "passed": result.passed,
-        "reason": result.reason,
-        "threshold": getattr(result, "threshold", None),
-        "evaluator": result.evaluator,
-    }
