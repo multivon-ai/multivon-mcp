@@ -254,6 +254,13 @@ accept, reject and indeterminate decisions from saved SQLite outcome evidence.
 The adapter checks persisted state and forbidden changes; it is a development
 preview, not part of the server's pinned multivon-eval 0.18.0 dependency.
 
+The development [media evidence bridge](https://docs.multivon.ai/guides/media-evidence)
+binds native Inspect media to exact content and explicit verdict references.
+Published MCP 0.4.0 reproduced a rejection from its saved six-case document
+report over stdio. This tool reads the report and policy; it does not fetch or
+decode media itself. The new media APIs require the core development checkout
+and are not added to this server's pinned dependency by this example.
+
 ## Dependencies
 
 Tested runtime bounds (from `pyproject.toml`):
