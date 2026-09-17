@@ -318,3 +318,12 @@ Apache 2.0.
   url    = {https://github.com/multivon-ai/multivon-mcp},
 }
 ```
+
+The experimental [vector world-model bridge](https://docs.multivon.ai/guides/world-models)
+produces the same saved report format. Actual stdio checks using published MCP
+0.4.0 and core 0.18.0 reproduced accept/reject/indeterminate for measured versus
+missing CartPole forecast checks. The server ran outside the development
+checkout so the installed core wheel was used. These post-hoc checks establish
+transport and coverage behavior, not world-model quality or a release decision.
+Training, simulation and prediction remain in the upstream library workflow;
+this server adds no world-model runner or heavy learning dependencies.
